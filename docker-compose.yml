@@ -1,60 +1,104 @@
-version: "3"
-
+version: '3'
 services:
   webserver:
-    build: 
-      context: ./bin/${PHPVERSION}
-    container_name: '${COMPOSE_PROJECT_NAME}-${PHPVERSION}'
-    restart: 'always'
-    ports:
-      - "${HOST_MACHINE_UNSECURE_HOST_PORT}:80"
-      - "${HOST_MACHINE_SECURE_HOST_PORT}:443"
-    links: 
-      - database
-    volumes: 
-      - ${DOCUMENT_ROOT-./www}:/var/www/html
-      - ${PHP_INI-./config/php/php.ini}:/usr/local/etc/php/php.ini
-      - ${VHOSTS_DIR-./config/vhosts}:/etc/apache2/sites-enabled
-      - ${LOG_DIR-./logs/apache2}:/var/log/apache2
-    environment:
-      APACHE_DOCUMENT_ROOT: ${APACHE_DOCUMENT_ROOT-/var/www/html}
-      PMA_PORT: ${HOST_MACHINE_PMA_PORT}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-  database:
     build:
-      context: "./bin/${DATABASE}"
-    container_name: '${COMPOSE_PROJECT_NAME}-database'
-    restart: 'always'
+      context: './bin/${PHPVERSION}'
+    container_name: '${COMPOSE_PROJECT_NAME}-${PHPVERSION}'
+    restart: always
     ports:
-      - "127.0.0.1:${HOST_MACHINE_MYSQL_PORT}:3306"
-    volumes: 
-      - ${MYSQL_DATA_DIR-./data/mysql}:/var/lib/mysql
-      - ${MYSQL_LOG_DIR-./logs/mysql}:/var/log/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: '${COMPOSE_PROJECT_NAME}-phpmyadmin'
+      - '${HOST_MACHINE_UNSECURE_HOST_PORT}:80'
+      - '${HOST_MACHINE_SECURE_HOST_PORT}:443'
+      - '8000:8000'
     links:
-      - database
+      - database-mysql
+      - database-postgres
+    volumes:
+      - '${DOCUMENT_ROOT-./www}:/var/www/html'
+      - '/mnt/scan:/mnt'
+      - '/home/cyber/Documents/project/petrostar-hrdocs:/var/www/html/sdm'
+      - '/home/cyber/Documents/Kerja/Petro/Dep-Remunerasi-&-Hubungan-Industri/Petrostar/Sistem/HRIS/sdm:/var/www/html/sdm2021'
+      - '/home/cyber/Documents/Kerja/Petro/Dep-Remunerasi-&-Hubungan-Industri/Mbak ivon/undian-berhadiah:/var/www/html/undian'
+      - '/home/cyber/Documents/project/PalemquinResto-Online-Restaurant-Order-System/code:/var/www/html/resto-admin/'
+      - '/home/cyber/Documents/Sinau Otodidak/stokku-api/app:/var/www/html/api'
+      - '/home/cyber/Documents/template/Bootstrap + Jquery/template-oneui:/var/www/html/oneui'
+      - '${PHP_INI-./config/php/php.ini}:/usr/local/etc/php/php.ini'
+      - './config/vhosts/default.conf:/etc/apache2/sites-enabled/000-default.conf'
+      - '${LOG_DIR-./logs/apache2}:/var/log/apache2'
     environment:
-      PMA_HOST: database
-      PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      APACHE_DOCUMENT_ROOT: '${APACHE_DOCUMENT_ROOT-/var/www/html}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+  
+  webserver-php8:
+    build:
+      context: './bin/php8'
+    container_name: '${COMPOSE_PROJECT_NAME}-PHP8'
+    restart: always
     ports:
-      - '${HOST_MACHINE_PMA_PORT}:80'
-    volumes: 
-      - /sessions
-      - ${PHP_INI-./config/php/php.ini}:/usr/local/etc/php/conf.d/php-phpmyadmin.ini
-  redis:
-    container_name: '${COMPOSE_PROJECT_NAME}-redis'
-    image: redis:latest
+      - '8080:80'
+      - '8081:81'
+      - '4443:443'
+      - '8001:8000'
+    links:
+      - database-mysql
+      - database-postgres
+    volumes:
+      - '${DOCUMENT_ROOT-./www/}:/var/www/html/'
+      - '${PHP_INI-./config/php/php.ini}:/usr/local/etc/php/php.ini'
+      - './config/vhosts/default-php8.conf:/etc/apache2/sites-enabled/000-default.conf'
+      - '${LOG_DIR-./logs/apache2}:/var/log/apache2'
+    environment:
+      APACHE_DOCUMENT_ROOT: '${APACHE_DOCUMENT_ROOT-/var/www/html}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+  database-mysql:
+    build:
+      context: './bin/${DATABASE}'
+    container_name: '${COMPOSE_PROJECT_NAME}-database-mysql'
+    restart: always
     ports:
-      - "127.0.0.1:${HOST_MACHINE_REDIS_PORT}:6379"
+      - '127.0.0.1:${HOST_MACHINE_MYSQL_PORT}:3306'
+    volumes:
+      - '${MYSQL_DATA_DIR-./data/mysql}:/var/lib/mysql'
+      - '${MYSQL_LOG_DIR-./logs/mysql}:/var/log/mysql'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+  database-postgres:
+    build:
+      context: './bin/postgresql'
+    container_name: '${COMPOSE_PROJECT_NAME}-database-postgres'
+    restart: always
+    ports:
+      - '127.0.0.1:${HOST_MACHINE_POSTGRES_PORT}:5432'
+    volumes:
+      - '${POSTGRES_DATA_DIR-./data/postgresql}:/var/lib/postgresql/data/pgdata'
+    environment:
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+  database-mongodb:
+    build:
+      context: './bin/mongodb'
+    container_name: '${COMPOSE_PROJECT_NAME}-database-mongodb'
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: docker
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: 'database-mongodb'
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: docker

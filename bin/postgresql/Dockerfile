@@ -1,0 +1,1 @@
+from postgres:9.6.20-alpine

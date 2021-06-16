@@ -31,7 +31,7 @@
                                 <li>PHP <?= phpversion(); ?></li>
                                 <li>
                                     <?php
-                                    $link = mysqli_connect("database", "root", $_ENV['MYSQL_ROOT_PASSWORD'], null);
+                                    $link = mysqli_connect("database-mysql", "root", $_ENV['MYSQL_ROOT_PASSWORD'], null);
 
 /* check connection */
                                     if (mysqli_connect_errno()) {
@@ -42,6 +42,19 @@
                                     }
                                     /* close connection */
                                     mysqli_close($link);
+                                    ?>
+                                </li>
+                                <li>
+                                    <?php 
+                                    $postgres_link = pg_connect("database-postgres","postgres", $_ENV['POSTGRES_PASSWORD']);
+
+                                    if($postgres_link){
+                                        printf("Postgresql Server %s", pg_version($postgres_link)["server"]);
+                                    }else{
+                                        printf("Postgresql connection failed");
+                                    }
+
+                                    pg_close($postgres_link);
                                     ?>
                                 </li>
                             </ul>

@@ -1,9 +1,13 @@
-FROM php:8.0.2-apache-buster
+FROM php:8.0.6-apache-buster
 
 # Surpresses debconf complaints of trying to install apt packages interactively
 # https://github.com/moby/moby/issues/4032#issuecomment-192327844
  
 ARG DEBIAN_FRONTEND=noninteractive
+
+#RUN apt-get clean autoclean
+#RUN apt-get autoremove --yes
+#RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Update
 RUN apt-get -y update --fix-missing && \
@@ -65,9 +69,15 @@ RUN cd /usr/local/src && \
     docker-php-ext-enable imagick
 
 # Other PHP8 Extensions
+RUN apt -y update
+RUN apt-get -y install libpq-dev
+RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql
+RUN docker-php-ext-install pgsql
+RUN docker-php-ext-install pdo
 
 RUN docker-php-ext-install pdo_mysql && \
     docker-php-ext-install pdo_sqlite && \
+    docker-php-ext-install pdo_pgsql && \
     docker-php-ext-install mysqli && \
     docker-php-ext-install curl && \
     docker-php-ext-install tokenizer && \
